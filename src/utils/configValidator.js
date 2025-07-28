@@ -21,8 +21,16 @@ export const validateOAuthConfig = () => {
   // Check Redirect URI
   if (!config.redirectUri) {
     issues.push('VITE_GOOGLE_OAUTH_REDIRECT_URI is missing from environment variables');
-  } else if (!config.redirectUri.includes('localhost:3000')) {
-    issues.push('VITE_GOOGLE_OAUTH_REDIRECT_URI should point to localhost:3000 for development');
+  } else {
+    const validUrls = [
+      'localhost:3001',
+      'localhost:3000', 
+      'googleadsdashboard.vercel.app'
+    ];
+    const isValidUrl = validUrls.some(url => config.redirectUri.includes(url));
+    if (!isValidUrl) {
+      issues.push('VITE_GOOGLE_OAUTH_REDIRECT_URI should point to localhost:3001 (dev) or googleadsdashboard.vercel.app (prod)');
+    }
   }
 
   // Check Google Ads configuration
