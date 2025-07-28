@@ -5,10 +5,10 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "env": {
-    "VITE_GOOGLE_ADS_CLIENT_ID": "@vite-google-ads-client-id",
-    "VITE_GOOGLE_MCC_TOKEN": "@vite-google-mcc-token", 
-    "VITE_GOOGLE_OAUTH_CLIENT_ID": "@vite-google-oauth-client-id",
-    "VITE_GOOGLE_OAUTH_REDIRECT_URI": "@vite-google-oauth-redirect-uri"
+    "VITE_GOOGLE_ADS_CLIENT_ID": "@google-ads-client-id",
+    "VITE_GOOGLE_MCC_TOKEN": "@google-mcc-token", 
+    "VITE_GOOGLE_OAUTH_CLIENT_ID": "@google-oauth-client-id",
+    "VITE_GOOGLE_OAUTH_REDIRECT_URI": "@google-oauth-redirect-uri"
   },
   "functions": {
     "api/**/*.js": {
