@@ -85,11 +85,22 @@ class GoogleAuthService {
   // Complete authentication flow with popup
   async authenticateWithPopup() {
     try {
+      // Validate client configuration first
+      if (!this.clientId) {
+        throw new Error('OAuth client ID is not configured. Please check your environment variables.');
+      }
+      
       const code = await this.openAuthPopup();
       const accessToken = await this.exchangeCodeForToken(code);
       return accessToken;
     } catch (error) {
       console.error('Popup authentication failed:', error);
+      
+      // Enhance error messages
+      if (error.message.includes('invalid_client')) {
+        throw new Error('OAuth client not found. Please verify your Google Cloud Console configuration.');
+      }
+      
       throw error;
     }
   }
@@ -97,21 +108,37 @@ class GoogleAuthService {
   // Exchange authorization code for access token
   async exchangeCodeForToken(code) {
     try {
+      // For public clients (frontend apps), we don't use client_secret
+      const requestBody = new URLSearchParams({
+        client_id: this.clientId,
+        code: code,
+        grant_type: 'authorization_code',
+        redirect_uri: this.redirectUri,
+      });
+
+      // Only add client_secret if it exists (for confidential clients)
+      const clientSecret = import.meta.env.GOOGLE_ADS_CLIENT_SECRET;
+      if (clientSecret) {
+        requestBody.append('client_secret', clientSecret);
+      }
+
       const response = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          client_id: this.clientId,
-          client_secret: import.meta.env.VITE_GOOGLE_ADS_CLIENT_SECRET,
-          code: code,
-          grant_type: 'authorization_code',
-          redirect_uri: this.redirectUri,
-        }),
+        body: requestBody,
       });
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Token exchange failed:', data);
+        if (data.error === 'invalid_client') {
+          throw new Error(`OAuth client not found (${data.error}): Please verify your Google Cloud Console configuration. Check that:\n1. Client ID is correct: ${this.clientId}\n2. Redirect URI is authorized: ${this.redirectUri}\n3. OAuth consent screen is configured\n4. Application type matches (Web application vs Public client)`);
+        }
+        throw new Error(`Token exchange failed: ${data.error_description || data.error}`);
+      }
       
       if (data.access_token) {
         // Store tokens in localStorage
