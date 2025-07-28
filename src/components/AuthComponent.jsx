@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
-import { LogIn, LogOut, Key, CheckCircle, AlertCircle } from 'lucide-react';
+import { LogOut, Key, CheckCircle, AlertCircle, Users, Info, X } from 'lucide-react';
 import GoogleAuthService from '../services/googleAuthService';
+import { isPopupBlocked, getPopupInstructions } from '../utils/popupHelpers';
 
 const AuthComponent = ({ onAuthChange }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authService] = useState(new GoogleAuthService());
   const [loading, setLoading] = useState(true);
+  const [authenticating, setAuthenticating] = useState(false);
+  const [error, setError] = useState(null);
+  const [showPopupHelp, setShowPopupHelp] = useState(false);
 
   useEffect(() => {
     checkAuthStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAuthStatus = async () => {
@@ -26,15 +31,53 @@ const AuthComponent = ({ onAuthChange }) => {
     }
   };
 
-  const handleSignIn = () => {
-    const authUrl = authService.getAuthUrl();
-    window.location.href = authUrl;
+  const handleSignIn = async () => {
+    setError(null);
+    setShowPopupHelp(false);
+    
+    // Check for popup blocker first
+    if (isPopupBlocked()) {
+      setShowPopupHelp(true);
+      setError('Popups are blocked. Please allow popups and try again.');
+      return;
+    }
+    
+    setAuthenticating(true);
+    
+    try {
+      const accessToken = await authService.authenticateWithPopup();
+      if (accessToken) {
+        setIsAuthenticated(true);
+        onAuthChange(true);
+      }
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      let errorMessage = 'Authentication failed. Please try again.';
+      
+      if (error.message.includes('Popup blocked')) {
+        errorMessage = 'Popup was blocked. Please allow popups and try again.';
+        setShowPopupHelp(true);
+      } else if (error.message.includes('cancelled')) {
+        errorMessage = 'Authentication was cancelled.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Authentication timed out. Please try again.';
+      }
+      
+      setError(errorMessage);
+      
+      // Clear error after 8 seconds
+      setTimeout(() => setError(null), 8000);
+    } finally {
+      setAuthenticating(false);
+    }
   };
 
   const handleSignOut = () => {
     authService.signOut();
     setIsAuthenticated(false);
     onAuthChange(false);
+    setError(null);
+    setShowPopupHelp(false);
   };
 
   if (loading) {
@@ -48,6 +91,59 @@ const AuthComponent = ({ onAuthChange }) => {
 
   return (
     <div className="flex items-center space-x-4">
+      {/* Popup Help Modal */}
+      {showPopupHelp && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Info className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold">Enable Popups</h3>
+              </div>
+              <button
+                onClick={() => setShowPopupHelp(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <p className="text-gray-600 text-sm">
+                To connect your Google Ads account, you need to allow popups for this site.
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-blue-800 text-sm font-medium mb-1">Instructions:</p>
+                <p className="text-blue-700 text-sm">{getPopupInstructions()}</p>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowPopupHelp(false)}
+                  className="flex-1 px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPopupHelp(false);
+                    handleSignIn();
+                  }}
+                  className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Error display */}
+      {error && !showPopupHelp && (
+        <div className="bg-red-50 border border-red-200 rounded px-3 py-1 text-sm text-red-700 max-w-xs">
+          {error}
+        </div>
+      )}
+      
       {isAuthenticated ? (
         <div className="flex items-center space-x-2">
           <div className="flex items-center space-x-1 text-green-600">
@@ -56,7 +152,8 @@ const AuthComponent = ({ onAuthChange }) => {
           </div>
           <button
             onClick={handleSignOut}
-            className="flex items-center space-x-1 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+            disabled={authenticating}
+            className="flex items-center space-x-1 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors disabled:opacity-50"
           >
             <LogOut className="h-4 w-4" />
             <span>Sign Out</span>
@@ -70,10 +167,21 @@ const AuthComponent = ({ onAuthChange }) => {
           </div>
           <button
             onClick={handleSignIn}
-            className="flex items-center space-x-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            disabled={authenticating}
+            className="flex items-center space-x-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Click to select your Google account and connect to Google Ads"
           >
-            <LogIn className="h-4 w-4" />
-            <span>Connect Google Ads</span>
+            {authenticating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Connecting...</span>
+              </>
+            ) : (
+              <>
+                <Users className="h-4 w-4" />
+                <span>Select Account</span>
+              </>
+            )}
           </button>
         </div>
       )}

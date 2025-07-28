@@ -111,9 +111,11 @@ npm run lint
 - Campaign type distribution
 
 ### Authentication Features
-- **OAuth 2.0 Flow**: Secure Google authentication
+- **Popup-based OAuth 2.0**: Secure Google authentication with account selection
+- **Account Selection**: Choose between multiple Google accounts
 - **Token Management**: Automatic token refresh
 - **Connection Status**: Visual indicators for connection state
+- **Popup Blocker Detection**: Automatic detection and user guidance
 - **Demo Mode**: Fallback to demo data when not connected
 
 ## 🔧 Customization

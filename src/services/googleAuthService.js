@@ -13,10 +13,85 @@ class GoogleAuthService {
       scope: this.scope,
       response_type: 'code',
       access_type: 'offline',
-      prompt: 'consent'
+      prompt: 'select_account consent', // This forces account selection
+      include_granted_scopes: 'true'
     });
 
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  }
+
+  // Open authentication popup
+  openAuthPopup() {
+    return new Promise((resolve, reject) => {
+      const authUrl = this.getAuthUrl();
+      const popup = window.open(
+        authUrl,
+        'google-auth',
+        'width=500,height=600,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no'
+      );
+
+      // Check if popup was blocked
+      if (!popup) {
+        reject(new Error('Popup blocked. Please allow popups for this site.'));
+        return;
+      }
+
+      // Poll for popup closure or message
+      const pollTimer = setInterval(() => {
+        try {
+          // Check if popup is closed
+          if (popup.closed) {
+            clearInterval(pollTimer);
+            reject(new Error('Authentication cancelled by user'));
+            return;
+          }
+
+          // Try to access popup URL (will throw error due to CORS until redirect)
+          const popupUrl = popup.location.href;
+          
+          // Check if we're on the callback URL
+          if (popupUrl.includes('/auth/callback') || popupUrl.includes('code=')) {
+            const urlParams = new URLSearchParams(popup.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+
+            clearInterval(pollTimer);
+            popup.close();
+
+            if (error) {
+              reject(new Error(`Authentication error: ${error}`));
+            } else if (code) {
+              resolve(code);
+            } else {
+              reject(new Error('No authorization code received'));
+            }
+          }
+        } catch (e) {
+          // Expected error due to CORS, continue polling
+        }
+      }, 1000);
+
+      // Timeout after 5 minutes
+      setTimeout(() => {
+        clearInterval(pollTimer);
+        if (!popup.closed) {
+          popup.close();
+        }
+        reject(new Error('Authentication timeout'));
+      }, 300000);
+    });
+  }
+
+  // Complete authentication flow with popup
+  async authenticateWithPopup() {
+    try {
+      const code = await this.openAuthPopup();
+      const accessToken = await this.exchangeCodeForToken(code);
+      return accessToken;
+    } catch (error) {
+      console.error('Popup authentication failed:', error);
+      throw error;
+    }
   }
 
   // Exchange authorization code for access token

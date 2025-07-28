@@ -15,6 +15,7 @@ import {
 import GoogleAdsService from './services/googleAdsService'
 import GoogleAuthService from './services/googleAuthService'
 import AuthComponent, { AuthCallback } from './components/AuthComponent'
+import PopupCallback from './components/PopupCallback'
 import { CampaignPerformanceChart, CostTrendChart, CampaignTypeChart } from './components/Charts'
 
 function App() {
@@ -31,13 +32,17 @@ function App() {
   const [googleAdsService] = useState(new GoogleAdsService())
   const [googleAuthService] = useState(new GoogleAuthService())
 
-  // Check if this is the OAuth callback page
+  // Check if this is the OAuth callback page (for popup or redirect)
   const isCallbackPage = window.location.pathname === '/auth/callback' || window.location.search.includes('code=')
+  
+  // Check if this is running in a popup window
+  const isPopupWindow = window.opener !== null
 
   useEffect(() => {
     if (isAuthenticated && !isCallbackPage) {
       loadDashboardData()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isCallbackPage])
 
   const handleAuthChange = async (authenticated) => {
@@ -93,6 +98,11 @@ function App() {
 
   // Handle OAuth callback
   if (isCallbackPage) {
+    // If this is running in a popup window, show the popup callback
+    if (isPopupWindow) {
+      return <PopupCallback />
+    }
+    // Otherwise, show the regular callback (fallback for redirect flow)
     return <AuthCallback />
   }
 
