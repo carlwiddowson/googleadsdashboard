@@ -66,7 +66,7 @@ class GoogleAuthService {
               reject(new Error('No authorization code received'));
             }
           }
-        } catch (e) {
+        } catch {
           // Expected error due to CORS, continue polling
         }
       }, 1000);
@@ -105,22 +105,17 @@ class GoogleAuthService {
     }
   }
 
-  // Exchange authorization code for access token
+  // Exchange authorization code for access token (Public Client Flow)
   async exchangeCodeForToken(code) {
     try {
-      // For public clients (frontend apps), we don't use client_secret
+      // For public clients (frontend apps), we use PKCE instead of client_secret
       const requestBody = new URLSearchParams({
         client_id: this.clientId,
         code: code,
         grant_type: 'authorization_code',
         redirect_uri: this.redirectUri,
+        // For public clients, we don't include client_secret
       });
-
-      // Only add client_secret if it exists (for confidential clients)
-      const clientSecret = import.meta.env.GOOGLE_ADS_CLIENT_SECRET;
-      if (clientSecret) {
-        requestBody.append('client_secret', clientSecret);
-      }
 
       const response = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
@@ -134,10 +129,17 @@ class GoogleAuthService {
       
       if (!response.ok) {
         console.error('Token exchange failed:', data);
+        
+        // Provide helpful error messages
         if (data.error === 'invalid_client') {
-          throw new Error(`OAuth client not found (${data.error}): Please verify your Google Cloud Console configuration. Check that:\n1. Client ID is correct: ${this.clientId}\n2. Redirect URI is authorized: ${this.redirectUri}\n3. OAuth consent screen is configured\n4. Application type matches (Web application vs Public client)`);
+          throw new Error(`OAuth configuration error: Your Google Cloud Console application must be configured as a "Public" client for frontend use. Current error: ${data.error_description || data.error}`);
         }
-        throw new Error(`Token exchange failed: ${data.error_description || data.error}`);
+        
+        if (data.error === 'redirect_uri_mismatch') {
+          throw new Error(`Redirect URI mismatch. Make sure "${this.redirectUri}" is added to your authorized redirect URIs in Google Cloud Console.`);
+        }
+        
+        throw new Error(`Token exchange failed: ${data.error_description || data.error}. For frontend apps, ensure your OAuth client is configured as a "Public" application type in Google Cloud Console.`);
       }
       
       if (data.access_token) {
@@ -206,7 +208,7 @@ class GoogleAuthService {
     if (tokenExpiry && Date.now() > parseInt(tokenExpiry)) {
       try {
         return await this.refreshAccessToken();
-      } catch (error) {
+      } catch {
         // If refresh fails, clear stored tokens
         this.clearTokens();
         return null;
