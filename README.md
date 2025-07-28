@@ -2,10 +2,21 @@
 
 A modern, responsive dashboard for managing Google Ads campaigns built with React, Vite, Tailwind CSS, and Lucide icons.
 
-## 🚀 Features
+## � Security Update
+
+**Important**: This application has been updated with proper security practices to protect sensitive API credentials from frontend exposure. See [SECURITY.md](SECURITY.md) for full details.
+
+- ✅ Removed hardcoded API secrets from frontend code
+- ✅ Implements secure demo mode when credentials are missing  
+- ✅ Only safe OAuth credentials exposed to frontend
+- ⚠️ **Production use requires a backend API server**
+
+## �🚀 Features
 
 - **Real Google Ads Integration**: Connect to your Google Ads account via OAuth
 - **Live Data Dashboard**: View real-time campaign performance, keywords, and metrics
+- **Secure Architecture**: Protects sensitive credentials from frontend exposure
+- **Demo Mode**: Safe fallback with mock data when credentials are missing
 - **Modern React**: Built with React 18 and modern hooks
 - **Fast Development**: Powered by Vite for lightning-fast HMR
 - **Beautiful UI**: Styled with Tailwind CSS for a clean, professional look

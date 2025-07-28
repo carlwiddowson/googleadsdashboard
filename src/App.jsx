@@ -211,7 +211,7 @@ function App() {
 
         {/* Authentication Required */}
         {!isAuthenticated && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center mb-6">
             <Activity className="h-12 w-12 mx-auto mb-4 text-blue-600" />
             <h2 className="text-xl font-semibold mb-2 text-blue-900">Connect Your Google Ads Account</h2>
             <p className="text-blue-700 mb-4">
@@ -220,6 +220,10 @@ function App() {
             <p className="text-sm text-blue-600">
               Demo data is shown below for preview purposes.
             </p>
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+              <strong>🔒 Security Notice:</strong> This application now runs in secure demo mode. 
+              Sensitive API credentials are protected and not exposed to the frontend.
+            </div>
           </div>
         )}
 

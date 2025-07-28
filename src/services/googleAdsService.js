@@ -3,8 +3,11 @@ import axios from 'axios';
 class GoogleAdsService {
   constructor() {
     this.baseURL = 'https://googleads.googleapis.com/v17';
-    this.customerId = import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID || '6721897224';
-    this.developerToken = import.meta.env.VITE_GOOGLE_MCC_TOKEN || 'FCabA0LrjOnj7QAMx9w_TQ';
+    // WARNING: These credentials should be handled by a backend API
+    // For security reasons, Google Ads API calls should go through your backend
+    this.customerId = null; // Should be fetched from backend
+    this.developerToken = null; // Should be handled by backend
+    this.isProductionMode = import.meta.env.PROD;
   }
 
   // Initialize with access token (obtained from OAuth flow)
@@ -14,6 +17,14 @@ class GoogleAdsService {
 
   // Get authorization headers
   getHeaders() {
+    if (!this.accessToken) {
+      throw new Error('Access token not available. Please authenticate first.');
+    }
+    
+    if (!this.developerToken) {
+      throw new Error('Developer token not available. This should be handled by your backend API.');
+    }
+
     return {
       'Authorization': `Bearer ${this.accessToken}`,
       'developer-token': this.developerToken,
@@ -21,8 +32,20 @@ class GoogleAdsService {
     };
   }
 
+  // Set credentials (should be called from backend)
+  setCredentials(customerId, developerToken) {
+    this.customerId = customerId;
+    this.developerToken = developerToken;
+  }
+
   // Search campaigns
   async getCampaigns() {
+    // In production, this should call your backend API instead of Google Ads API directly
+    if (!this.customerId || !this.developerToken || !this.accessToken) {
+      console.warn('Google Ads credentials not available, using mock data for security');
+      return this.getMockCampaigns();
+    }
+
     try {
       const query = `
         SELECT 
@@ -55,12 +78,19 @@ class GoogleAdsService {
       return this.processCampaignData(response.data);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
+      console.warn('Falling back to mock data due to API error');
       return this.getMockCampaigns();
     }
   }
 
   // Get account performance metrics
   async getAccountMetrics() {
+    // In production, this should call your backend API instead of Google Ads API directly
+    if (!this.customerId || !this.developerToken || !this.accessToken) {
+      console.warn('Google Ads credentials not available, using mock data for security');
+      return this.getMockAccountMetrics();
+    }
+
     try {
       const query = `
         SELECT 
@@ -89,12 +119,19 @@ class GoogleAdsService {
       return this.processAccountMetrics(response.data);
     } catch (error) {
       console.error('Error fetching account metrics:', error);
+      console.warn('Falling back to mock data due to API error');
       return this.getMockAccountMetrics();
     }
   }
 
   // Get keywords performance
   async getKeywords() {
+    // In production, this should call your backend API instead of Google Ads API directly
+    if (!this.customerId || !this.developerToken || !this.accessToken) {
+      console.warn('Google Ads credentials not available, using mock data for security');
+      return this.getMockKeywords();
+    }
+
     try {
       const query = `
         SELECT 
@@ -128,6 +165,7 @@ class GoogleAdsService {
       return this.processKeywordData(response.data);
     } catch (error) {
       console.error('Error fetching keywords:', error);
+      console.warn('Falling back to mock data due to API error');
       return this.getMockKeywords();
     }
   }
