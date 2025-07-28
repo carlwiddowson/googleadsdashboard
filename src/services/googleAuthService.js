@@ -1,7 +1,7 @@
 class GoogleAuthService {
   constructor() {
-    this.clientId = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID;
-    this.redirectUri = import.meta.env.VITE_GOOGLE_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+    this.clientId = import.meta.env.GOOGLE_OAUTH_CLIENT_ID;
+    this.redirectUri = import.meta.env.GOOGLE_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
     this.scope = 'https://www.googleapis.com/auth/adwords';
   }
 
@@ -159,7 +159,7 @@ class GoogleAuthService {
     }
   }
 
-  // Refresh access token using refresh token
+  // Refresh access token using refresh token (Public Client Flow)
   async refreshAccessToken() {
     const refreshToken = localStorage.getItem('google_ads_refresh_token');
     if (!refreshToken) {
@@ -174,13 +174,18 @@ class GoogleAuthService {
         },
         body: new URLSearchParams({
           client_id: this.clientId,
-          client_secret: import.meta.env.VITE_GOOGLE_ADS_CLIENT_SECRET,
+          // No client_secret for public clients
           refresh_token: refreshToken,
           grant_type: 'refresh_token',
         }),
       });
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Token refresh failed:', data);
+        throw new Error(`Token refresh failed: ${data.error_description || data.error}`);
+      }
       
       if (data.access_token) {
         localStorage.setItem('google_ads_access_token', data.access_token);
