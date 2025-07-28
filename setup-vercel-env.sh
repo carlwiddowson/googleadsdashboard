@@ -9,10 +9,10 @@ echo ""
 
 # Frontend variables (safe for client-side)
 echo "Setting frontend environment variables..."
-vercel env add VITE_GOOGLE_ADS_CLIENT_ID production
-vercel env add VITE_GOOGLE_MCC_TOKEN production  
-vercel env add VITE_GOOGLE_OAUTH_CLIENT_ID production
-vercel env add VITE_GOOGLE_OAUTH_REDIRECT_URI production
+vercel env add GOOGLE_ADS_CLIENT_ID production
+vercel env add GOOGLE_MCC_TOKEN production  
+vercel env add GOOGLE_OAUTH_CLIENT_ID production
+vercel env add GOOGLE_OAUTH_REDIRECT_URI production
 
 echo ""
 echo "Setting backend environment variables (sensitive)..."

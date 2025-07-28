@@ -5,10 +5,13 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "env": {
-    "VITE_GOOGLE_ADS_CLIENT_ID": "@google-ads-client-id",
-    "VITE_GOOGLE_MCC_TOKEN": "@google-mcc-token", 
-    "VITE_GOOGLE_OAUTH_CLIENT_ID": "@google-oauth-client-id",
-    "VITE_GOOGLE_OAUTH_REDIRECT_URI": "@google-oauth-redirect-uri"
+    "GOOGLE_ADS_CLIENT_ID": "@google-ads-client-id",
+    "GOOGLE_MCC_TOKEN": "@google-mcc-token", 
+    "GOOGLE_OAUTH_CLIENT_ID": "@google-oauth-client-id",
+    "GOOGLE_OAUTH_REDIRECT_URI": "@google-oauth-redirect-uri",
+    "GOOGLE_ADS_CLIENT_SECRET": "@google-ads-client-secret",
+    "GOOGLE_ADS_DEVELOPER_TOKEN": "@google-ads-developer-token",
+    "GOOGLE_ADS_CUSTOMER_ID": "@google-ads-customer-id"
   },
   "functions": {
     "api/**/*.js": {
