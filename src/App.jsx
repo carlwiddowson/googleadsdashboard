@@ -17,6 +17,7 @@ import GoogleAuthService from './services/googleAuthService'
 import AuthComponent, { AuthCallback } from './components/AuthComponent'
 import PopupCallback from './components/PopupCallback'
 import { CampaignPerformanceChart, CostTrendChart, CampaignTypeChart } from './components/Charts'
+import EnvDebug from './components/EnvDebug'
 
 function App() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -169,6 +170,11 @@ function App() {
           </div>
         </div>
       </header>
+
+      {/* Debug Component - Remove in production */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <EnvDebug />
+      </div>
 
       {/* Navigation */}
       <nav className="bg-white border-b">
